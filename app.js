@@ -37,8 +37,7 @@ function setup() {
 function mouse_move(evt) {
 
     let rect = App.canvas.getBoundingClientRect();
-	App.light.x = evt.clientX - rect.left;
-	App.light.y = evt.clientY - rect.top;
+	App.lightset_position(evt.clientX - rect.left, evt.clientY - rect.top);
 }
 
 function loop(timestamp) {
