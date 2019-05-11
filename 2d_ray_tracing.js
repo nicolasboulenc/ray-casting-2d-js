@@ -14,6 +14,19 @@ class Wall {
 		
 		this.hits.push({x: point.x, y: point.y, is_lit: is_lit});
 	}
+
+	sort_hits() {
+
+		// determine whether wall is mostly horizontal or vertical
+		if(this.bx / this.ax > this.by / this.ay) {
+			// if mostly horizontal sort by x
+			this.hits.sort((a, b) => a.x - b.x);
+		} 
+		else {
+			// if mostly vertical sort by y
+			this.hits.sort((a, b) => a.y - b.y);
+		}
+	}
 }
 
 class Ray {

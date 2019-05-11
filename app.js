@@ -22,7 +22,7 @@ function setup() {
 	App.ctx.fillStyle = "rgb(192, 192, 192)";
 	App.ctx.font = "12px Lucida Console";
 
-	App.light = new Light(0, 0, 16000);
+	App.light = new Light(0, 0, 360);
 	App.walls = [];
 
 	// 4 walls
@@ -128,7 +128,7 @@ function draw_scene(light, walls, ctx) {
 
 	App.walls.forEach(wall => { 
 		wall.is_lit = false; 
-		wall.hits = []; 
+		wall.hits = [];
 	});
 
 	// draw light rays
@@ -148,11 +148,17 @@ function draw_scene(light, walls, ctx) {
 
 
 	// draw walls
+	App.walls.forEach(wall => { 
+		wall.sort_hits();
+	});
+
 	ctx.strokeStyle = "grey";
 	ctx.lineWidth = 3;
-	ctx.beginPath();
 	
-	walls.forEach(wall => {
+	walls.forEach((wall, index) => {
+
+		ctx.beginPath();
+
 		wall.hits.forEach((point, index) => {
 			if(index === 0) ctx.moveTo(point.x, point.y);
 			if(point.is_lit === false) 
@@ -160,10 +166,11 @@ function draw_scene(light, walls, ctx) {
 			else
 				ctx.lineTo(point.x, point.y);
 		});
+
+		ctx.closePath();
+		ctx.stroke();
 	});
 
-	ctx.closePath();
-	ctx.stroke();
 
 
 	// draw light source
