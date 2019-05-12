@@ -24,8 +24,8 @@ function setup() {
 	App.ctx.font = "12px Lucida Console";
 	
 	App.lights = [];
-	App.lights.push(new Light(0, 0, 7200, "rgba(255, 127, 0, 0.5)"));
-	App.lights.push(new Light(50, 100, 7200, "rgba(255, 127, 0, 0.5)"));
+	App.lights.push(new Light(0, 0, 720, "rgba(255, 127, 0, 0.5)"));
+	App.lights.push(new Light(50, 100, 720, "rgba(255, 127, 0, 0.5)"));
 
 	load_scene2();
 
@@ -44,7 +44,7 @@ function loop(timestamp) {
 	//clear canvas
 	App.ctx.clearRect(0, 0, App.canvas.width, App.canvas.height);
 
-	if(App.lights.length > 0) {
+	if(App.lights.length > 1) {
 
 		let x = App.canvas.width / 2 + Math.cos(App.light_angle) * App.canvas.width / 3;
 		let y = App.canvas.height / 2 + Math.sin(App.light_angle) * App.canvas.height / 3;
@@ -132,6 +132,7 @@ function draw_scene(lights, walls, ctx) {
 	walls.forEach(wall => { 
 		wall.is_lit = false; 
 		wall.hits = [];
+		wall.lights = [];
 	});
 
 	// draw light rays
@@ -143,8 +144,8 @@ function draw_scene(lights, walls, ctx) {
 		const intersections = light.cast(walls);
 		App.intersections_count += intersections.length;
 		intersections.forEach((point, index) => {
-			if(index === 0) ctx.moveTo(point.x, point.y);
-			ctx.lineTo(point.x, point.y);
+			if(index === 0) ctx.moveTo(Math.round(point.x), Math.round(point.y));
+			ctx.lineTo(Math.round(point.x), Math.round(point.y));
 		});
 		ctx.closePath();
 		ctx.fill();
@@ -156,8 +157,8 @@ function draw_scene(lights, walls, ctx) {
 	ctx.strokeStyle = "rgba(32, 32, 32, 1)";
 	ctx.beginPath();
 	walls.forEach(wall => {
-		ctx.moveTo(wall.ax, wall.ay);
-		ctx.lineTo(wall.bx, wall.by);
+		ctx.moveTo(Math.round(wall.ax), Math.round(wall.ay));
+		ctx.lineTo(Math.round(wall.bx), Math.round(wall.by));
 	});
 	ctx.closePath();
 	ctx.stroke();
@@ -173,27 +174,28 @@ function draw_scene(lights, walls, ctx) {
 	walls.forEach((wall, index) => {
 
 		ctx.beginPath();
+		wall.hits.forEach(light_hits => {
 
-		let hits_index = 0;
-		const hits_count = wall.hits.length;
-		let prev_lit = null;
-		while(hits_index < hits_count) {
-
-			let point = wall.hits[hits_index];
-
-			if(point.is_lit !== prev_lit) {
-				ctx.moveTo(point.x, point.y);
-				prev_lit = point.is_lit;
+			let hits_index = 0;
+			const hits_count = light_hits.length;
+			let prev_lit = null;
+			while(hits_index < hits_count) {
+	
+				let point = light_hits[hits_index];
+	
+				if(point.is_lit !== prev_lit) {
+					ctx.moveTo(Math.round(point.x), Math.round(point.y));
+					prev_lit = point.is_lit;
+				}
+	
+				if(point.is_lit === false) 
+					ctx.moveTo(Math.round(point.x), Math.round(point.y));
+				else
+					ctx.lineTo(Math.round(point.x), Math.round(point.y));
+	
+				hits_index++;
 			}
-
-			if(point.is_lit === false) 
-				ctx.moveTo(point.x, point.y);
-			else
-				ctx.lineTo(point.x, point.y);
-
-			hits_index++;
-		}
-
+		});
 		ctx.closePath();
 		ctx.stroke();
 	});
