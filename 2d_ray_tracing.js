@@ -11,7 +11,7 @@ class Wall {
 	}
 
 	hit(point, is_lit) {
-		
+		if(this.hits === null) return;
 		this.hits.push({x: point.x, y: point.y, is_lit: is_lit});
 	}
 
@@ -101,11 +101,12 @@ class Ray {
 
 class Light {
 
-	constructor(x, y, rays_count) {
+	constructor(x, y, rays_count, color) {
 
 		this.x = x;
 		this.y = y;
 		this.rays = [];
+		this.color = color;
 
 		let rays_index = 0;
 		let angle = 0;
