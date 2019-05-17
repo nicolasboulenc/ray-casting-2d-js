@@ -167,9 +167,10 @@ class Light {
 
 			// add hits to intersections array and to walls
 			let hits_index = 0;
-			const hits_count = this.length;
+			const hits_count = hits.length;
 			while(hits_index < hits_count) {
 
+				const ray_hit = hits[hits_index];
 				if(hits_index === 0) {
 					ray_hit.wall.hit(ray_hit.x, ray_hit.y, this, true);
 					this.hits.push({ x: ray_hit.x, y: ray_hit.y });

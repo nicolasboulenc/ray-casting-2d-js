@@ -38,7 +38,7 @@ function setup() {
 
 	App.lights = [];
 	App.lights.push(new Light(0, 0, 720, "rgba(255, 127, 0, 0.5)"));
-	// App.lights.push(new Light(50, 100, 720, "rgba(255, 127, 0, 0.5)"));
+	App.lights.push(new Light(50, 100, 720, "rgba(0, 127, 255, 0.5)"));
 	App.camera = new Camera({x: 200, y: 200, angle: Math.PI/4, fov: Math.PI / 180 * 90, near: 10, rays_count: 800});
 
 	App.draw_func = draw_scene2b;
@@ -319,74 +319,64 @@ function draw_scene2b(lights, walls, camera, ctx) {
 
 	App.intersections_count = 0;
 
+
+	// update light casting
 	walls.forEach(wall => { wall.reset(); });
 
 	lights.forEach(light => { 
 		light.reset(); 
-		light.cast();
+		light.cast(walls);
 	});
 
-	// draw light rays
+	walls.forEach(wall => { 
+		wall.process_hits();
+	});
+
+
+	// draw light area
 	lights.forEach(light => {
 		
 		ctx.fillStyle = light.color;
 		ctx.beginPath();
 
-		
-		const intersections = light.cast(walls);
-		App.intersections_count += intersections.length;
-		intersections.forEach((point, index) => {
-			if(index === 0) ctx.moveTo(Math.round(point.x), Math.round(point.y));
-			ctx.lineTo(Math.round(point.x), Math.round(point.y));
+		App.intersections_count += light.hits.length;
+		light.hits.forEach((hit, index) => {
+			if(index === 0) ctx.moveTo(Math.round(hit.x), Math.round(hit.y));
+			ctx.lineTo(Math.round(hit.x), Math.round(hit.y));
 		});
 		
 		ctx.closePath();
 		ctx.fill();
 	});
-	
-	// draw over lit parts
-	ctx.strokeStyle = "grey";
 
-	walls.forEach(wall => { 
-		wall.process_hits();
-	});
-	
-	walls.forEach((wall, index) => {
 
-		ctx.beginPath();
-		wall.hits.forEach(light_hits => {
+	// draw walls
+	ctx.lineWidth = 3;	
+	walls.forEach((wall) => {
 
-			let hits_index = 0;
-			const hits_count = light_hits.length;
-			let prev_lit = null;
-			while(hits_index < hits_count) {
-	
-				let point = light_hits[hits_index];
-	
-				if(point.is_lit !== prev_lit) {
-					ctx.moveTo(Math.round(point.x), Math.round(point.y));
-					prev_lit = point.is_lit;
-				}
-	
-				if(point.is_lit === false) 
-					ctx.moveTo(Math.round(point.x), Math.round(point.y));
+		wall.segments.forEach(light_segments => {
+			
+			light_segments.forEach(segment => {
+				
+				// mix colors
+				if(segment.is_lit)
+					ctx.strokeStyle = "white";
 				else
-					ctx.lineTo(Math.round(point.x), Math.round(point.y));
-	
-				hits_index++;
-			}
+					ctx.strokeStyle = "red";
+
+				ctx.beginPath();
+				ctx.moveTo(Math.round(segment.ax), Math.round(segment.ay));
+				ctx.lineTo(Math.round(segment.bx), Math.round(segment.by));
+				ctx.stroke();
+			});
 		});
-		ctx.closePath();
-		ctx.stroke();
 	});
+
 
 	// draw light source
+	ctx.lineWidth = 1;	
 	lights.forEach(light => {
 
-		// var gradient = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, 10);
-		// gradient.addColorStop(0, "white");
-		// gradient.addColorStop(1, "rgba(255, 165, 0, 1)");
-		// ctx.fillStyle = gradient;
 		ctx.strokeStyle = light.color;
 		ctx.fillStyle = light.color;
 		ctx.lineWidth = 1;
@@ -396,36 +386,6 @@ function draw_scene2b(lights, walls, camera, ctx) {
 		ctx.closePath();
 		ctx.fill();
 	});
-
-	// draw camera
-	// ctx.strokeStyle = "white";
-	// ctx.fillStyle = "white";
-	// ctx.lineWidth = 1;
-
-	// ctx.beginPath();
-	// ctx.arc(camera.x, camera.y, 10, 0, 2 * Math.PI);
-	// ctx.fill();
-
-	// let mag = camera.near / Math.cos(camera.fov / 2);
-	// mag = 200;
-	// let ax = camera.x + Math.cos(camera.angle - camera.fov / 2) * mag;
-	// let ay = camera.y + Math.sin(camera.angle - camera.fov / 2) * mag;
-	// let bx = camera.x + Math.cos(camera.angle + camera.fov / 2) * mag;
-	// let by = camera.y + Math.sin(camera.angle + camera.fov / 2) * mag;
-	// ctx.moveTo(camera.x, camera.y);
-	// ctx.lineTo(ax, ay);
-	// ctx.lineTo(bx, by);
-	// ctx.lineTo(camera.x, camera.y);
-	// ctx.stroke();
-
-	// ctx.strokeStyle = "grey";
-	// ctx.beginPath();
-	// // draw camera rays
-	// camera.rays.forEach(ray => {
-	// 	ctx.moveTo(camera.x, camera.y);
-	// 	ctx.lineTo(camera.x + ray.direction_x * 500, camera.y + ray.direction_y * 500);
-	// });
-	// ctx.stroke();
 }
 
 
