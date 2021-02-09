@@ -24,7 +24,7 @@ class Wall {
 
 		let light_index = this.lights.findIndex(elem => {
 			return elem === light;
-		});	
+		});
 
 		if(light_index === -1) {
 			this.lights.push(light);
@@ -44,7 +44,7 @@ class Wall {
 			this.hits.forEach(light_hits => {
 				light_hits.sort((a, b) => a.x - b.x);
 			});
-		} 
+		}
 		else {
 			// if mostly vertical sort by y
 			this.hits.forEach(light_hits => {
@@ -73,65 +73,65 @@ class Wall {
 		});
 
 		// simplify segments into a single list
-		const single_list = [];
-		this.segments.forEach((light_segments, light_index) => {
+		// const single_list = [];
+		// this.segments.forEach((light_segments, light_index) => {
 
-			light_segments.forEach((segment) => {
-				
-				// check if point a intersect with any segments
-				let list_index = 0;
-				let list_count = single_list.length;
-				let does_intersect = false;
-				// todo check x coords > current x
-				while(list_index < list_count && does_intersect === false) {
+		// 	light_segments.forEach((segment) => {
 
-					const list_segment = single_list[list_index];
-					if(segment.ax > list_segment.ax && segment.ax < list_segment.bx) {
-						
-						const segment1 = {ax: list_segment.ax, ay: list_segment.ay, bx: segment.ax, by: segment.ay, lights: list_segment.lights};
-						const segment2 = {ax: segment.ax, ay: segment.ay, bx: list_segment.bx, by: list_segment.by, lights: list_segment.lights.concat([this.lights[light_index]])};
-						single_list.splice(list_index, 1, segment1, segment2);
-						does_intersect = true;
-					}
-					list_index++;
-				}
-				// if no intersect need to add a segment at the beginning
-				// if() {}
+		// 		// check if point a intersect with any segments
+		// 		let list_index = 0;
+		// 		let list_count = single_list.length;
+		// 		let does_intersect = false;
+		// 		// todo check x coords > current x
+		// 		while(list_index < list_count && does_intersect === false) {
 
-				// check overlap
-				list_index--;
-				does_intersect = false;
-				while(list_index < list_count && does_intersect === false) {
+		// 			const list_segment = single_list[list_index];
+		// 			if(segment.ax > list_segment.ax && segment.ax < list_segment.bx) {
 
-					const list_segment = single_list[list_index];
-					if(segment.bx > list_segment.ax && segment.bx < list_segment.bx) {
-						does_intersect = true;
-					}
-					else {
-						list_segment.lights.push(this.lights[light_index]);
-					}
-					list_index++;
-				}
+		// 				const segment1 = {ax: list_segment.ax, ay: list_segment.ay, bx: segment.ax, by: segment.ay, lights: list_segment.lights};
+		// 				const segment2 = {ax: segment.ax, ay: segment.ay, bx: list_segment.bx, by: list_segment.by, lights: list_segment.lights.concat([this.lights[light_index]])};
+		// 				single_list.splice(list_index, 1, segment1, segment2);
+		// 				does_intersect = true;
+		// 			}
+		// 			list_index++;
+		// 		}
+		// 		// if no intersect need to add a segment at the beginning
+		// 		// if() {}
 
-				// check if point b intersect with any segments
-				list_index--;
-				does_intersect = false;
-				while(list_index < list_count && does_intersect === false) {
+		// 		// check overlap
+		// 		list_index--;
+		// 		does_intersect = false;
+		// 		while(list_index < list_count && does_intersect === false) {
 
-					const list_segment = single_list[list_index];
-					if(segment.bx > list_segment.ax && segment.bx < list_segment.bx) {
-						
-						const segment1 = {ax: list_segment.ax, ay: list_segment.ay, bx: segment.bx, by: segment.by, lights: list_segment.lights.concat([this.lights[light_index]])};
-						const segment2 = {ax: segment.bx, ay: segment.by, bx: list_segment.bx, by: list_segment.by, lights: list_segment.lights};
-						single_list.splice(list_index, 1, segment1, segment2);
-						does_intersect = true;
-					}
-					list_index++;
-				}
-			});
-		});
+		// 			const list_segment = single_list[list_index];
+		// 			if(segment.bx > list_segment.ax && segment.bx < list_segment.bx) {
+		// 				does_intersect = true;
+		// 			}
+		// 			else {
+		// 				list_segment.lights.push(this.lights[light_index]);
+		// 			}
+		// 			list_index++;
+		// 		}
 
-		this.segments = single_list;
+		// 		// check if point b intersect with any segments
+		// 		list_index--;
+		// 		does_intersect = false;
+		// 		while(list_index < list_count && does_intersect === false) {
+
+		// 			const list_segment = single_list[list_index];
+		// 			if(segment.bx > list_segment.ax && segment.bx < list_segment.bx) {
+
+		// 				const segment1 = {ax: list_segment.ax, ay: list_segment.ay, bx: segment.bx, by: segment.by, lights: list_segment.lights.concat([this.lights[light_index]])};
+		// 				const segment2 = {ax: segment.bx, ay: segment.by, bx: list_segment.bx, by: list_segment.by, lights: list_segment.lights};
+		// 				single_list.splice(list_index, 1, segment1, segment2);
+		// 				does_intersect = true;
+		// 			}
+		// 			list_index++;
+		// 		}
+		// 	});
+		// });
+
+		// this.segments = single_list;
 	}
 }
 
@@ -315,9 +315,9 @@ class Camera {
 
 		// const start_angle = this.angle - this.fov / 2;
 		// this.rays.forEach((ray, index) => {
-			
+
 		// 	ray.set_angle(start_angle + this.fov / this.rays.length * index);
-		// }, this);	
+		// }, this);
 	}
 
 	move_forward(delta_time) {
