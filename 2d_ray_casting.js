@@ -221,9 +221,12 @@ class Light {
 	// returns an array of segments
 	cast(walls) {
 
+		let all_hits = [];
+
 		for(const ray of this.rays) {
 
 			const hits = ray.cast({x: this.x, y: this.y}, walls);
+			all_hits = all_hits.concat(hits);
 
 			// add hits to intersections array and to walls
 			let hits_index = 0;
@@ -241,6 +244,8 @@ class Light {
 				hits_index++;
 			}
 		}
+
+		return all_hits;
 	}
 }
 

@@ -8,7 +8,7 @@ const App = {
 	ctx: null,
 	ctx2: null,
 	lights: null,
-	light_angle: 0,
+	lights_angle: null,
 	camera: null,
 	walls: null,
 	intersections_count: 0,
@@ -35,14 +35,16 @@ function setup() {
 	App.ctx2.fillStyle = "rgb(64, 64, 64)";
 	App.ctx2.font = "12px Lucida Console";
 
-
 	App.lights = [];
-	App.lights.push(new Light(0, 0, 720, "rgba(255, 127, 0, 0.5)"));
-	App.lights.push(new Light(50, 100, 720, "rgba(0, 127, 255, 0.5)"));
+	App.lights_angle = [];
+	App.lights.push(new Light(0, 0, 360, "rgba(255, 127, 0, 0.5)"));
+	App.lights_angle.push(0);
+	// App.lights.push(new Light(50, 100, 360, "rgba(0, 127, 255, 0.5)"));
+	// App.lights_angle.push(0);
+
 	App.camera = new Camera({x: 200, y: 200, angle: Math.PI/4, fov: Math.PI / 180 * 90, near: 10, rays_count: 800});
 
-	App.draw_func = draw_scene2b;
-
+	App.draw_func = draw_scene1;
 	document.getElementById("Draw1").onclick = (evt) => { App.draw_func = draw_scene1 };
 	document.getElementById("Draw2").onclick = (evt) => { App.draw_func = draw_scene2 };
 	document.getElementById("Draw3").onclick = (evt) => { App.draw_func = draw_scene3 };
@@ -102,14 +104,11 @@ function loop(timestamp) {
 	if(App.controls.s === true) { App.camera.move_backward(); }
 	if(App.controls.d === true) { App.camera.move_right(); }
 
-	// if(App.lights.length > 1) {
-	// 	let x = App.canvas.width / 2 + Math.cos(App.light_angle) * App.canvas.width / 3;
-	// 	let y = App.canvas.height / 2 + Math.sin(App.light_angle) * App.canvas.height / 3;
-	// 	App.lights[1].x = x; 
-	// 	App.lights[1].y = y;
-	// 	App.light_angle += Math.PI * 2 / 200;
-	// }
-
+	// let x = App.canvas.width / 2 + Math.cos(App.lights_angle[0]) * App.canvas.width / 7;
+	// let y = App.canvas.height / 2 + Math.sin(App.lights_angle[0]) * App.canvas.height / 7;
+	// App.lights[0].x = x;
+	// App.lights[0].y = y;
+	// App.lights_angle[0] += Math.PI * 2 / 200;
 
 	//clear canvas
 	App.ctx.clearRect(0, 0, App.canvas.width, App.canvas.height);
@@ -133,146 +132,68 @@ function loop(timestamp) {
 }
 
 
-
-/*
-	Draw the scene using individual lines par ray with alpha which gives a soft effect
-*/
 function draw_scene1(lights, walls, camera, ctx) {
-
-	App.walls.forEach(wall => { wall.is_lit = false; });
-
-	// draw light rays
-	lights.forEach(light => {
-		
-		ctx.strokeStyle = light.color;
-		ctx.lineWidth = 12;
-		const intersections = light.cast(walls);
-		intersections.forEach(point => {
-			ctx.beginPath();
-			ctx.moveTo(light.x, light.y);
-			ctx.lineTo(point.x, point.y);
-			ctx.closePath();
-			ctx.stroke();
-		});
-	});
-
-	// draw walls
-	ctx.strokeStyle = "grey";
-	ctx.lineWidth = 3;
-	ctx.beginPath();
-	
-	walls.forEach(wall => {
-
-		if(wall.is_lit === true) {
-			ctx.moveTo(wall.ax, wall.ay);
-			ctx.lineTo(wall.bx, wall.by);			
-		}
-	});
-
-	ctx.closePath();
-    ctx.stroke();
-
-
-	// draw light source
-	lights.forEach(light => {
-
-		ctx.strokeStyle = "rgba(255, 0, 0, 0.5)";
-		ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
-		ctx.lineWidth = 1;
-		
-		ctx.beginPath();
-		ctx.arc(light.x, light.y, 10, 0, 2 * Math.PI);
-		ctx.closePath();
-		ctx.fill();
-
-		ctx.stroke();
-	});
-}
-
-
-function draw_scene2(lights, walls, camera, ctx) {
 
 	App.intersections_count = 0;
 
-	walls.forEach(wall => { 
-		wall.is_lit = false; 
-		wall.hits = [];
-		wall.lights = [];
+
+	// update light casting
+	walls.forEach(wall => { wall.reset(); });
+
+	lights.forEach(light => {
+		light.reset();
+		light.cast(walls);
 	});
 
-	// draw light rays
+	walls.forEach(wall => {
+		wall.process_hits();
+	});
+
+
+	// draw light area
 	lights.forEach(light => {
-		
+
 		ctx.fillStyle = light.color;
 		ctx.beginPath();
 
-		const intersections = light.cast(walls);
-		App.intersections_count += intersections.length;
-		intersections.forEach((point, index) => {
-			if(index === 0) ctx.moveTo(Math.round(point.x), Math.round(point.y));
-			ctx.lineTo(Math.round(point.x), Math.round(point.y));
+		App.intersections_count += light.hits.length;
+		light.hits.forEach((hit, index) => {
+			if(index === 0) ctx.moveTo(Math.round(hit.x), Math.round(hit.y));
+			ctx.lineTo(Math.round(hit.x), Math.round(hit.y));
 		});
-		
+
 		ctx.closePath();
 		ctx.fill();
 	});
-	
-	// draw un-lit walls
-	ctx.lineCap = "round";
+
+
+	// draw walls
 	ctx.lineWidth = 3;
-	ctx.strokeStyle = "rgba(32, 32, 32, 1)";
-	ctx.beginPath();
-	walls.forEach(wall => {
-		ctx.moveTo(Math.round(wall.ax), Math.round(wall.ay));
-		ctx.lineTo(Math.round(wall.bx), Math.round(wall.by));
-	});
-	ctx.closePath();
-	ctx.stroke();
+	walls.forEach((wall) => {
 
+		wall.segments.forEach(light_segments => {
 
-	// draw over lit parts
-	ctx.strokeStyle = "grey";
+			light_segments.forEach(segment => {
 
-	walls.forEach(wall => { 
-		wall.process_hits();
-	});
-	
-	walls.forEach((wall, index) => {
-
-		ctx.beginPath();
-		wall.hits.forEach(light_hits => {
-
-			let hits_index = 0;
-			const hits_count = light_hits.length;
-			let prev_lit = null;
-			while(hits_index < hits_count) {
-	
-				let point = light_hits[hits_index];
-	
-				if(point.is_lit !== prev_lit) {
-					ctx.moveTo(Math.round(point.x), Math.round(point.y));
-					prev_lit = point.is_lit;
-				}
-	
-				if(point.is_lit === false) 
-					ctx.moveTo(Math.round(point.x), Math.round(point.y));
+				// mix colors
+				if(segment.is_lit)
+					ctx.strokeStyle = "white";
 				else
-					ctx.lineTo(Math.round(point.x), Math.round(point.y));
-	
-				hits_index++;
-			}
+					ctx.strokeStyle = "red";
+
+				ctx.beginPath();
+				ctx.moveTo(Math.round(segment.ax), Math.round(segment.ay));
+				ctx.lineTo(Math.round(segment.bx), Math.round(segment.by));
+				ctx.stroke();
+			});
 		});
-		ctx.closePath();
-		ctx.stroke();
 	});
+
 
 	// draw light source
+	ctx.lineWidth = 1;
 	lights.forEach(light => {
 
-		// var gradient = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, 10);
-		// gradient.addColorStop(0, "white");
-		// gradient.addColorStop(1, "rgba(255, 165, 0, 1)");
-		// ctx.fillStyle = gradient;
 		ctx.strokeStyle = light.color;
 		ctx.fillStyle = light.color;
 		ctx.lineWidth = 1;
@@ -312,146 +233,6 @@ function draw_scene2(lights, walls, camera, ctx) {
 	// 	ctx.lineTo(camera.x + ray.direction_x * 500, camera.y + ray.direction_y * 500);
 	// });
 	// ctx.stroke();
-}
-
-
-function draw_scene2b(lights, walls, camera, ctx) {
-
-	App.intersections_count = 0;
-
-
-	// update light casting
-	walls.forEach(wall => { wall.reset(); });
-
-	lights.forEach(light => { 
-		light.reset(); 
-		light.cast(walls);
-	});
-
-	walls.forEach(wall => { 
-		wall.process_hits();
-	});
-
-
-	// draw light area
-	lights.forEach(light => {
-		
-		ctx.fillStyle = light.color;
-		ctx.beginPath();
-
-		App.intersections_count += light.hits.length;
-		light.hits.forEach((hit, index) => {
-			if(index === 0) ctx.moveTo(Math.round(hit.x), Math.round(hit.y));
-			ctx.lineTo(Math.round(hit.x), Math.round(hit.y));
-		});
-		
-		ctx.closePath();
-		ctx.fill();
-	});
-
-
-	// draw walls
-	ctx.lineWidth = 3;	
-	walls.forEach((wall) => {
-
-		wall.segments.forEach(light_segments => {
-			
-			light_segments.forEach(segment => {
-				
-				// mix colors
-				if(segment.is_lit)
-					ctx.strokeStyle = "white";
-				else
-					ctx.strokeStyle = "red";
-
-				ctx.beginPath();
-				ctx.moveTo(Math.round(segment.ax), Math.round(segment.ay));
-				ctx.lineTo(Math.round(segment.bx), Math.round(segment.by));
-				ctx.stroke();
-			});
-		});
-	});
-
-
-	// draw light source
-	ctx.lineWidth = 1;	
-	lights.forEach(light => {
-
-		ctx.strokeStyle = light.color;
-		ctx.fillStyle = light.color;
-		ctx.lineWidth = 1;
-
-		ctx.beginPath();
-		ctx.arc(light.x, light.y, 10, 0, 2 * Math.PI);
-		ctx.closePath();
-		ctx.fill();
-	});
-}
-
-
-function draw_scene3(lights, walls, camera, ctx) {
-
-	App.intersections_count = 0;
-
-	// clip
-	ctx.save();
-	const path = new Path2D();
-	lights.forEach(light => {
-
-		const intersections = light.cast(walls);
-		App.intersections_count += intersections.length;
-		intersections.forEach((point, index) => {
-			if(index === 0) path.moveTo(point.x, point.y);
-			path.lineTo(point.x, point.y);
-		});
-	});
-	ctx.clip(path);
-
-	
-	// draw light rays
-	lights.forEach(light => {
-		
-		ctx.fillStyle = light.color;
-		ctx.beginPath();
-
-		const intersections = light.cast(walls);
-		App.intersections_count += intersections.length;
-		intersections.forEach((point, index) => {
-			if(index === 0) ctx.moveTo(point.x, point.y);
-			ctx.lineTo(point.x, point.y);
-		});
-		
-		ctx.closePath();
-		ctx.fill();
-	});
-
-
-	// draw walls
-	ctx.lineCap = "round";
-	ctx.lineWidth = 3;
-	ctx.strokeStyle = "grey";
-	ctx.beginPath();
-	walls.forEach(wall => {
-		ctx.moveTo(wall.ax, wall.ay);
-		ctx.lineTo(wall.bx, wall.by);
-	});
-	ctx.closePath();
-	ctx.stroke();
-
-
-	// draw light source
-	lights.forEach(light => {
-
-		ctx.strokeStyle = light.color;
-		ctx.fillStyle = light.color;
-		ctx.lineWidth = 1;
-
-		ctx.beginPath();
-		ctx.arc(light.x, light.y, 10, 0, 2 * Math.PI);
-		ctx.closePath();
-		ctx.fill();
-	});
-	ctx.restore();
 }
 
 
@@ -501,28 +282,28 @@ function load_scene(scene) {
 		App.walls.push( new Wall(500, 200, 500, 220) );
 		App.walls.push( new Wall(500, 220, 300, 220) );
 		App.walls.push( new Wall(300, 220, 300, 200) );
-	
+
 		App.walls.push( new Wall(App.canvas.width - 220, 300, App.canvas.width - 220, 500) );
 		App.walls.push( new Wall(App.canvas.width - 220, 500, App.canvas.width - 200, 500) );
 		App.walls.push( new Wall(App.canvas.width - 200, 500, App.canvas.width - 200, 300) );
 		App.walls.push( new Wall(App.canvas.width - 200, 300, App.canvas.width - 220, 300) );
-	
+
 		App.walls.push( new Wall(300, App.canvas.height - 220, 500, App.canvas.height - 220) );
 		App.walls.push( new Wall(500, App.canvas.height - 220, 500, App.canvas.height - 200) );
 		App.walls.push( new Wall(500, App.canvas.height - 200, 300, App.canvas.height - 200) );
 		App.walls.push( new Wall(300, App.canvas.height - 200, 300, App.canvas.height - 220) );
-	
+
 		App.walls.push( new Wall(220, 300, 220, 500) );
 		App.walls.push( new Wall(220, 500, 200, 500) );
 		App.walls.push( new Wall(200, 500, 200, 300) );
 		App.walls.push( new Wall(200, 300, 220, 300) );
-	
+
 		// centre square
 		App.walls.push( new Wall(400 - 10, 400 - 10, 400 + 10, 400 - 10) );
 		App.walls.push( new Wall(400 + 10, 400 - 10, 400 + 10, 400 + 10) );
 		App.walls.push( new Wall(400 + 10, 400 + 10, 400 - 10, 400 + 10) );
 		App.walls.push( new Wall(400 - 10, 400 + 10, 400 - 10, 400 - 10) );
-	
+
 		// canvas bounds
 		App.walls.push( new Wall(0, 0, App.canvas.width, 0) );
 		App.walls.push( new Wall(App.canvas.width, 0, App.canvas.width, App.canvas.height) );
@@ -536,15 +317,15 @@ function load_scene(scene) {
 		let x = App.canvas.width / 2 - half_dimension;
 		let y = dimension;
 		while(y < App.canvas.height) {
-	
+
 			App.walls.push( new Wall(x, y, x, y + dimension) );
 			App.walls.push( new Wall(x, y + dimension, x + dimension, y + dimension) );
 			App.walls.push( new Wall(x + dimension, y + dimension, x + dimension, y) );
 			App.walls.push( new Wall(x + dimension, y, x, y) );
-		
+
 			y += dimension * 2;
 		}
-	
+
 		// canvas bounds
 		App.walls.push( new Wall(0, 0, App.canvas.width, 0) );
 		App.walls.push( new Wall(App.canvas.width, 0, App.canvas.width, App.canvas.height) );
