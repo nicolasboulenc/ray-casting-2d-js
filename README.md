@@ -1,1 +1,1 @@
-2d-ray-tracer-js
+ray-tracer-2d-js
