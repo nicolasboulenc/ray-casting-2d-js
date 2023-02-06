@@ -1,19 +1,18 @@
 "use strict";
 
-window.onload = ()=>{ setup(); };
 
 const App = {
 	canvas: null,
 	ctx: null,
 	lights: null,
-	lights_angle: null,
-	camera: null,
 	walls: null,
 	intersections_count: 0,
 	timer: 0,
 	frame_count: 0,
 	frame_per_seconds: 0
 };
+
+setup()
 
 function setup() {
 
@@ -22,16 +21,12 @@ function setup() {
 	App.ctx = App.canvas.getContext("2d", {alpha: false});
 
 	App.lights = [];
-	App.lights_angle = [];
-	App.lights.push(new Light(0, 0, 1080, "rgba(255, 127, 0, 0.5)"));
-	App.lights_angle.push(0);
+	App.lights.push(new Light(0, 0, 540, "rgba(255, 127, 0, 0.5)"));
 
 	App.lights[0]._x = 300;
 	App.lights[0]._y = 300;
 
-	App.camera = new Camera({x: 200, y: 200, angle: Math.PI/4, fov: Math.PI / 180 * 90, near: 10, rays_count: 800});
-
-	load_scene(0);
+	load_scene(1);
 
 	requestAnimationFrame(loop);
 }
@@ -49,7 +44,7 @@ function loop(timestamp) {
 
 	//clear canvas
 	App.ctx.clearRect(0, 0, App.canvas.width, App.canvas.height);
-	draw_scene1(App.lights, App.walls, App.ctx);
+	draw_scene(App.lights, App.walls, App.ctx);
 
 	// display fps
 	if( (App.frame_count % 10) === 0 ) {
@@ -66,27 +61,26 @@ function loop(timestamp) {
 }
 
 
-function draw_scene1(lights, walls, ctx) {
+function draw_scene(lights, walls, ctx) {
 
 	App.intersections_count = 0;
 
-
 	// update light casting
-	walls.forEach(wall => { wall.reset(); });
+	for(const wall of walls) {
+		wall.reset();
+	}
 
-	lights.forEach(light => {
+	for(const light of lights) {
 		light.reset();
 		light.cast(walls);
-	});
+	}
 
-	walls.forEach(wall => {
+	for(const wall of walls) {
 		wall.process_hits();
-	});
+	}
 
 
-	// draw light area
-	lights.forEach(light => {
-
+	for(const light of lights) {
 		ctx.fillStyle = light._color;
 		ctx.beginPath();
 
@@ -98,51 +92,46 @@ function draw_scene1(lights, walls, ctx) {
 
 		ctx.closePath();
 		ctx.fill();
-	});
-
+	}
 
 	// draw walls
 	ctx.lineWidth = 3;
-	walls.forEach((wall) => {
-
+	for(const wall of walls) {
 		ctx.strokeStyle = "#333";
 		ctx.beginPath();
 		ctx.moveTo(wall.ax, wall.ay);
 		ctx.lineTo(wall.bx, wall.by);
 		ctx.stroke();
-
+	
 		wall.segments.forEach(light_segments => {
-
+	
 			light_segments.forEach(segment => {
-
+	
 				// mix colors
 				if(segment.is_lit)
 					ctx.strokeStyle = "white";
 				else
 					ctx.strokeStyle = "#333";
-
+	
 				ctx.beginPath();
 				ctx.moveTo(Math.round(segment.ax), Math.round(segment.ay));
 				ctx.lineTo(Math.round(segment.bx), Math.round(segment.by));
 				ctx.stroke();
 			});
 		});
-	});
-
-
-	// draw light source
+	}
+	
 	ctx.lineWidth = 1;
-	lights.forEach(light => {
-
+	for(const light of lights) {
 		ctx.strokeStyle = light.color;
 		ctx.fillStyle = light.color;
 		ctx.lineWidth = 1;
-
+	
 		ctx.beginPath();
 		ctx.arc(light.x, light.y, 10, 0, 2 * Math.PI);
 		ctx.closePath();
 		ctx.fill();
-	});
+	}
 }
 
 
